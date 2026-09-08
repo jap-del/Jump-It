@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>점프잇 - 심심할 때 한 판! 무료 미니게임</title>
+<meta name="description" content="장애물을 피해 점프하는 심플한 미니게임, 점프잇. 설치 없이 바로 즐기는 무료 브라우저 게임. 최고 기록에 도전해보세요!">
+<meta name="keywords" content="점프잇, 미니게임, 무료게임, 브라우저게임, 심심풀이게임, 캐주얼게임">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="https://example.com/">
+
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="점프잇 - 심심할 때 한 판!">
+<meta property="og:description" content="장애물을 피해 점프하는 심플한 미니게임. 지금 바로 플레이해보세요!">
+<meta property="og:image" content="og-image.png">
+
+<!-- Favicon (inline SVG, no extra request) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236c5ce7'/%3E%3Crect x='30' y='30' width='40' height='40' rx='8' fill='white'/%3E%3C/svg%3E">
+
+<!--
+  ============================================================
+  Google AdSense 연동 방법
+  1) 아래 <head> 안의 스크립트 태그에서 ca-pub-XXXXXXXXXXXXXXXX 를
+     본인의 애드센스 게시자 ID로 교체하세요.
+  2) <ins class="adsbygoogle"> 블록의 data-ad-client, data-ad-slot 값도
+     애드센스 대시보드에서 발급받은 값으로 교체하세요.
+  3) 사이트를 실제 도메인에 배포한 뒤, 루트 경로에 ads.txt 파일을 만들고
+     "google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0" 를
+     한 줄 넣어야 애드센스 승인/수익 인식이 정상적으로 됩니다.
+  4) 승인 전에는 광고 스크립트가 빈 영역으로 남거나 아무것도 표시되지 않을 수 있습니다.
+  ============================================================
+-->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+
+<style>
+  :root{
+    --bg:#0f1020;
+    --panel:#181933;
+    --accent:#6c5ce7;
+    --accent2:#00d2ff;
+    --text:#f2f2f7;
+    --sub:#9a9ac0;
+    --ground:#2c2d55;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{
+    margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Malgun Gothic",Roboto,sans-serif;
+    overscroll-behavior:none;
+  }
+  .app-grid{
+    max-width:1080px;margin:0 auto;padding:12px 12px 24px;
+    min-height:100dvh;
+    display:grid;
+    grid-template-columns:150px minmax(280px,640px) 210px;
+    grid-template-areas:"skins center rank";
+    gap:12px;
+    align-items:start;
+    justify-content:center;
+  }
+  .center-col{
+    grid-area:center;
+    display:flex;flex-direction:column;align-items:center;
+    min-width:0;
+  }
+  .panel{
+    background:var(--panel);border-radius:14px;padding:14px;
+    border:1px solid rgba(255,255,255,0.06);
+  }
+  .panel h3{margin:0 0 10px;font-size:12px;color:var(--sub);font-weight:700;letter-spacing:0.3px;text-transform:uppercase;}
+
+  /* ---- Skin panel ---- */
+  .skin-panel{grid-area:skins;}
+  .skin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .skin-swatch{
+    aspect-ratio:1;border-radius:12px;border:2px solid transparent;cursor:pointer;
+    background:linear-gradient(135deg,var(--c1),var(--c2));
+    display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;
+    transition:transform .12s;
+  }
+  .skin-swatch span{font-size:10px;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.6);font-weight:700;}
+  .skin-swatch:active{transform:scale(0.94);}
+  .skin-swatch.selected{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,0.25);}
+
+  /* ---- Side panel (records + ranking) ---- */
+  .side-panel{grid-area:rank;display:flex;flex-direction:column;gap:16px;}
+  .my-best{font-size:13px;color:var(--sub);margin-bottom:8px;}
+  .my-best strong{color:var(--text);font-size:16px;}
+  .history-list,.rank-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;}
+  .history-list li,.rank-list li{
+    display:flex;align-items:center;justify-content:space-between;gap:6px;
+    font-size:12px;background:rgba(255,255,255,0.03);border-radius:8px;padding:6px 8px;
+  }
+  .history-list li .hist-date{color:var(--sub);font-size:11px;}
+  .rank-list li{justify-content:flex-start;}
+  .rank-list .rank-no{
+    width:18px;height:18px;border-radius:50%;background:rgba(255,255,255,0.08);
+    display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0;
+  }
+  .rank-list .rank-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .rank-list .rank-score{font-variant-numeric:tabular-nums;color:var(--accent2);font-weight:700;}
+  .rank-list li.me{background:rgba(108,92,231,0.18);border:1px solid rgba(108,92,231,0.4);}
+  .history-list li.empty,.rank-list li.empty{color:var(--sub);justify-content:center;}
+  .rank-register{display:flex;gap:6px;margin-bottom:8px;}
+  .rank-register input{
+    flex:1;min-width:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    border-radius:8px;padding:7px 9px;color:var(--text);font-size:12px;
+  }
+  .rank-register input::placeholder{color:var(--sub);}
+  .btn.small{padding:7px 12px;font-size:11px;margin-top:0;box-shadow:none;white-space:nowrap;}
+  .rank-msg{font-size:11px;color:var(--sub);margin:0 0 8px;line-height:1.5;}
+
+  @media (max-width:700px){
+    .app-grid{
+      grid-template-columns:1fr;
+      grid-template-areas:"center" "skins" "rank";
+      max-width:640px;
+    }
+    .skin-grid{grid-template-columns:repeat(4,1fr);}
+    .side-panel{flex-direction:row;flex-wrap:wrap;}
+    .side-panel > div{flex:1;min-width:220px;}
+  }
+
+  header{width:100%;text-align:center;padding:8px 0 4px;}
+  h1{font-size:22px;margin:0 0 2px;letter-spacing:-0.5px;
+     background:linear-gradient(90deg,var(--accent),var(--accent2));
+     -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .tagline{font-size:12px;color:var(--sub);margin:0;}
+
+  /* Ad slot: reserve fixed height to avoid layout shift (CLS) */
+  .ad-slot{
+    width:100%;max-width:728px;margin:10px auto;
+    min-height:90px;display:flex;align-items:center;justify-content:center;
+    background:rgba(255,255,255,0.03);border:1px dashed rgba(255,255,255,0.08);
+    border-radius:8px;overflow:hidden;font-size:11px;color:var(--sub);
+  }
+  .ad-slot.bottom{min-height:100px;}
+  .ad-label{position:absolute;font-size:9px;color:var(--sub);opacity:0.5;}
+
+  .game-container{
+    position:relative;width:100%;max-width:640px;
+    border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,#1b1c3a 0%,#12132a 60%,var(--ground) 100%);
+    box-shadow:0 10px 30px rgba(0,0,0,0.4);
+    touch-action:manipulation;
+    aspect-ratio: 16 / 9;
+  }
+  canvas{display:block;width:100%;height:100%;}
+
+  .hud{
+    position:absolute;top:10px;left:0;right:0;
+    display:flex;justify-content:space-between;padding:0 14px;
+    font-variant-numeric:tabular-nums;pointer-events:none;
+  }
+  .hud .score{font-size:22px;font-weight:700;}
+  .hud-right{display:flex;align-items:center;gap:8px;}
+  .hud .best{font-size:13px;color:var(--sub);}
+  .mute-btn{
+    pointer-events:auto;
+    width:28px;height:28px;border-radius:50%;border:none;
+    background:rgba(255,255,255,0.1);color:var(--text);
+    font-size:14px;line-height:1;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    padding:0;
+  }
+  .mute-btn:active{transform:scale(0.92);}
+
+  .overlay{
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:10px;
+    background:rgba(10,10,25,0.55);backdrop-filter:blur(2px);
+    text-align:center;padding:20px;
+  }
+  .overlay h2{margin:0;font-size:24px;}
+  .overlay p{margin:0;color:var(--sub);font-size:13px;line-height:1.6;}
+  .overlay .final-score{font-size:40px;font-weight:800;margin:4px 0;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;background-clip:text;color:transparent;}
+  .btn{
+    margin-top:6px;padding:12px 28px;border:none;border-radius:999px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    color:#0f1020;font-weight:700;font-size:15px;cursor:pointer;
+    box-shadow:0 6px 16px rgba(108,92,231,0.4);
+  }
+  .btn:active{transform:scale(0.97);}
+  .hidden{display:none !important;}
+
+  .controls-hint{
+    margin-top:10px;font-size:12px;color:var(--sub);text-align:center;
+  }
+  .controls-hint kbd{
+    background:var(--panel);padding:2px 6px;border-radius:4px;font-size:11px;
+  }
+
+  footer{
+    margin-top:20px;font-size:11px;color:var(--sub);text-align:center;line-height:1.8;
+  }
+  footer a{color:var(--sub);}
+
+  @media (max-width:480px){
+    h1{font-size:19px;}
+    .hud .score{font-size:18px;}
+  }
+</style>
+</head>
+<body>
+<div class="app-grid">
+
+  <!-- 왼쪽: 스킨 선택 패널 -->
+  <aside class="panel skin-panel">
+    <h3>스킨 선택</h3>
+    <div class="skin-grid" id="skinGrid">
+      <button class="skin-swatch" data-skin="0" style="--c1:#00d2ff;--c2:#6c5ce7"><span>오션</span></button>
+      <button class="skin-swatch" data-skin="1" style="--c1:#ff9f43;--c2:#ee5253"><span>선셋</span></button>
+      <button class="skin-swatch" data-skin="2" style="--c1:#26de81;--c2:#0fb9b1"><span>라임</span></button>
+      <button class="skin-swatch" data-skin="3" style="--c1:#fd79a8;--c2:#a55eea"><span>핑크</span></button>
+    </div>
+  </aside>
+
+  <div class="center-col">
+  <header>
+    <h1>점프잇 JUMP IT</h1>
+    <p class="tagline">스페이스바 또는 화면 탭으로 점프! 장애물을 피해보세요</p>
+  </header>
+
+  <!-- 상단 광고 슬롯 (본인 애드센스 값으로 교체) -->
+  <div class="ad-slot top">
+    <ins class="adsbygoogle"
+         style="display:block;width:100%;height:100%"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="0000000000"
+         data-ad-format="horizontal"
+         data-full-width-responsive="true"></ins>
+  </div>
+
+  <div class="game-container" id="gameContainer">
+    <canvas id="game"></canvas>
+    <div class="hud">
+      <div class="score" id="scoreEl">0</div>
+      <div class="hud-right">
+        <button class="mute-btn" id="muteBtn" aria-label="음소거 전환" title="음소거 전환">🔊</button>
+        <div class="best" id="bestEl">BEST 0.00</div>
+      </div>
+    </div>
+
+    <div class="overlay" id="startOverlay">
+      <h2>점프잇</h2>
+      <p>탭하거나 스페이스바를 눌러 시작하세요<br>장애물에 닿으면 게임이 끝나요</p>
+      <button class="btn" id="startBtn">게임 시작</button>
+    </div>
+
+    <div class="overlay hidden" id="overOverlay">
+      <h2>게임 종료</h2>
+      <div class="final-score" id="finalScoreEl">0</div>
+      <p id="newBestMsg" class="hidden">🎉 신기록 달성!</p>
+      <button class="btn" id="retryBtn">다시 도전</button>
+    </div>
+  </div>
+
+  <p class="controls-hint">
+    PC: <kbd>Space</kbd> 또는 <kbd>↑</kbd> 로 점프 &nbsp;|&nbsp; 모바일: 화면 탭
+  </p>
+
+  <!-- 하단 광고 슬롯 -->
+  <div class="ad-slot bottom">
+    <ins class="adsbygoogle"
+         style="display:block;width:100%;height:100%"
+         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+         data-ad-slot="0000000001"
+         data-ad-format="horizontal"
+         data-full-width-responsive="true"></ins>
+  </div>
+
+  <footer>
+    심심할 때 한 판, 점프잇 &copy; 2026 &nbsp;|&nbsp; <a href="privacy.html">개인정보처리방침</a>
+  </footer>
+  </div>
+
+  <!-- 오른쪽: 내 기록 + 실시간 랭킹 패널 -->
+  <aside class="panel side-panel">
+    <div>
+      <h3>내 기록</h3>
+      <div class="my-best" id="myBestEl">최고 <strong>0.00</strong></div>
+      <ul class="history-list" id="historyList"></ul>
+    </div>
+    <div>
+      <h3>실시간 랭킹 TOP 10</h3>
+      <div class="rank-register">
+        <input type="text" id="nicknameInput" maxlength="8" placeholder="닉네임 (최대 8자)">
+        <button class="btn small" id="registerBtn">등록</button>
+      </div>
+      <p class="rank-msg" id="rankMsg"></p>
+      <ol class="rank-list" id="rankList"></ol>
+    </div>
+  </aside>
+
+</div>
+
+<!--
+  ============================================================
+  실시간 랭킹(Supabase) 연동 방법 — 무료
+  1) https://supabase.com 에서 새 프로젝트 생성
+  2) 왼쪽 메뉴 SQL Editor에서 아래 쿼리 실행 (테이블 생성 + 공개 접근 규칙):
+     create table leaderboard (
+       id text primary key,
+       name text not null,
+       score numeric not null,
+       updated_at timestamptz default now()
+     );
+     alter table leaderboard enable row level security;
+     create policy "public read" on leaderboard for select using (true);
+     create policy "public insert" on leaderboard for insert with check (true);
+     create policy "public update" on leaderboard for update using (true);
+  3) 왼쪽 메뉴 Database > Replication 에서 leaderboard 테이블의 Realtime을 켜세요
+     (이걸 켜야 다른 사람이 등록한 기록이 새로고침 없이 실시간으로 반영됩니다)
+  4) 왼쪽 메뉴 Project Settings > API 에서 "Project URL"과 "anon public" 키를 복사해
+     아래 스크립트의 SUPABASE_URL, SUPABASE_ANON_KEY 값에 그대로 붙여넣으세요.
+  5) 설정 전에는 랭킹판이 "로컬 전용" 안내와 함께 내 최고 기록만 보여줍니다.
+  * 참고: anon key로 누구나 점수를 쓸 수 있는 구조라 캐주얼 게임 랭킹판 용도에는
+    충분하지만, 악의적으로 값을 조작해 등록하는 것까지 막지는 못합니다.
+  ============================================================
+-->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Ad init (safe no-op if adsbygoogle not loaded/blocked) ----------
+  try{
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+    (window.adsbygoogle = window.adsbygoogle || []).push({});
+  }catch(e){}
+
+  // ---------- Audio (WebAudio, synthesized — no asset files) ----------
+  var MUTE_KEY = 'jumpit_muted';
+  var audio = {
+    ctx: null,
+    master: null,
+    bgmGain: null,
+    sfxGain: null,
+    muted: localStorage.getItem(MUTE_KEY) === '1',
+    playing: false,
+    timerId: null,
+    nextNoteTime: 0,
+    step: 0,
+    tempo: 132,
+    // simple pentatonic arpeggio loop (lead) + soft root-pulse (bass)
+    lead: [523.25, 659.25, 783.99, 659.25, 523.25, 659.25, 587.33, 493.88],
+    bass: [130.81, null, 196.00, null, 130.81, null, 164.81, null]
+  };
+  var muteBtn = document.getElementById('muteBtn');
+  muteBtn.textContent = audio.muted ? '🔇' : '🔊';
+
+  function initAudio(){
+    if(audio.ctx) return;
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return;
+    audio.ctx = new AC();
+    audio.master = audio.ctx.createGain();
+    audio.master.gain.value = audio.muted ? 0 : 1;
+    audio.master.connect(audio.ctx.destination);
+
+    audio.bgmGain = audio.ctx.createGain();
+    audio.bgmGain.gain.value = 0.05;
+    audio.bgmGain.connect(audio.master);
+
+    audio.sfxGain = audio.ctx.createGain();
+    audio.sfxGain.gain.value = 0.22;
+    audio.sfxGain.connect(audio.master);
+  }
+
+  function toggleMute(){
+    audio.muted = !audio.muted;
+    localStorage.setItem(MUTE_KEY, audio.muted ? '1' : '0');
+    muteBtn.textContent = audio.muted ? '🔇' : '🔊';
+    if(audio.master) audio.master.gain.setTargetAtTime(audio.muted ? 0 : 1, audio.ctx.currentTime, 0.05);
+    if(audio.ctx && audio.ctx.state === 'suspended') audio.ctx.resume();
+  }
+
+  function playTone(time, freq, dur, type, dest, vol){
+    var osc = audio.ctx.createOscillator();
+    var g = audio.ctx.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, time);
+    g.gain.setValueAtTime(0, time);
+    g.gain.linearRampToValueAtTime(vol, time + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.001, time + dur);
+    osc.connect(g);
+    g.connect(dest);
+    osc.start(time);
+    osc.stop(time + dur + 0.02);
+  }
+
+  function bgmScheduleStep(time){
+    var leadFreq = audio.lead[audio.step % audio.lead.length];
+    playTone(time, leadFreq, 0.16, 'triangle', audio.bgmGain, 0.6);
+    var bassFreq = audio.bass[audio.step % audio.bass.length];
+    if(bassFreq) playTone(time, bassFreq, 0.28, 'sine', audio.bgmGain, 0.8);
+    audio.step++;
+  }
+
+  function bgmScheduler(){
+    if(!audio.playing) return;
+    var scheduleAhead = 0.12;
+    while(audio.nextNoteTime < audio.ctx.currentTime + scheduleAhead){
+      bgmScheduleStep(audio.nextNoteTime);
+      audio.nextNoteTime += (60 / audio.tempo) / 2; // eighth notes
+    }
+    audio.timerId = setTimeout(bgmScheduler, 25);
+  }
+
+  function startBgm(){
+    if(!audio.ctx || audio.playing) return;
+    if(audio.ctx.state === 'suspended') audio.ctx.resume();
+    audio.playing = true;
+    audio.step = 0;
+    audio.nextNoteTime = audio.ctx.currentTime + 0.05;
+    bgmScheduler();
+  }
+
+  function stopBgm(){
+    audio.playing = false;
+    if(audio.timerId){ clearTimeout(audio.timerId); audio.timerId = null; }
+  }
+
+  function playJumpSfx(){
+    if(!audio.ctx) return;
+    var t = audio.ctx.currentTime;
+    var osc = audio.ctx.createOscillator();
+    var g = audio.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(320, t);
+    osc.frequency.exponentialRampToValueAtTime(700, t + 0.1);
+    g.gain.setValueAtTime(0.24, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.13);
+    osc.connect(g);
+    g.connect(audio.sfxGain);
+    osc.start(t);
+    osc.stop(t + 0.15);
+  }
+
+  function playGameOverSfx(){
+    if(!audio.ctx) return;
+    var t = audio.ctx.currentTime;
+    [392, 311.13, 261.63].forEach(function(freq, i){
+      var start = t + i * 0.11;
+      var osc = audio.ctx.createOscillator();
+      var g = audio.ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(freq, start);
+      g.gain.setValueAtTime(0.18, start);
+      g.gain.exponentialRampToValueAtTime(0.001, start + 0.2);
+      osc.connect(g);
+      g.connect(audio.sfxGain);
+      osc.start(start);
+      osc.stop(start + 0.22);
+    });
+  }
+
+  // ---------- Canvas setup ----------
+  var canvas = document.getElementById('game');
+  var ctx = canvas.getContext('2d', { alpha:false });
+  var container = document.getElementById('gameContainer');
+  var scoreEl = document.getElementById('scoreEl');
+  var bestEl = document.getElementById('bestEl');
+  var startOverlay = document.getElementById('startOverlay');
+  var overOverlay = document.getElementById('overOverlay');
+  var finalScoreEl = document.getElementById('finalScoreEl');
+  var newBestMsg = document.getElementById('newBestMsg');
+  var startBtn = document.getElementById('startBtn');
+  var retryBtn = document.getElementById('retryBtn');
+
+  var DPR = Math.min(window.devicePixelRatio || 1, 2);
+  var W = 0, H = 0; // logical size (CSS px)
+
+  function resize(){
+    var rect = container.getBoundingClientRect();
+    W = rect.width;
+    H = rect.height;
+    canvas.width = Math.round(W * DPR);
+    canvas.height = Math.round(H * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // ---------- Game state ----------
+  var STORAGE_KEY = 'jumpit_best_score';
+  var best = parseFloat(localStorage.getItem(STORAGE_KEY) || '0');
+  bestEl.textContent = 'BEST ' + best.toFixed(2);
+
+  var state = 'idle'; // idle | playing | over
+  var groundY, player, obstacles, particles;
+  var speed, gravity, score, elapsed, spawnTimer, spawnInterval;
+  var shakeT = 0;
+
+  function initGame(){
+    groundY = H * 0.82;
+    player = {
+      x: W * 0.16,
+      y: groundY,
+      w: Math.max(28, H*0.11),
+      h: Math.max(28, H*0.11),
+      vy: 0,
+      onGround: true,
+      jumpsLeft: 2,
+      rot: 0
+    };
+    obstacles = [];
+    particles = [];
+    speed = W * 0.42;          // px/sec
+    gravity = H * 3.3;         // px/sec^2
+    score = 0;
+    elapsed = 0;
+    spawnTimer = 0;
+    spawnInterval = 1.3;
+    shakeT = 0;
+  }
+
+  function jump(){
+    if(state === 'idle'){ startGame(); return; }
+    if(state === 'over'){ return; }
+    if(player.jumpsLeft > 0){
+      player.vy = -H * 1.32;
+      player.jumpsLeft--;
+      spawnBurst(player.x + player.w/2, player.y + player.h, 6);
+      playJumpSfx();
+    }
+  }
+
+  function spawnBurst(x,y,n){
+    for(var i=0;i<n;i++){
+      particles.push({
+        x:x, y:y,
+        vx:(Math.random()-0.5)*140,
+        vy:-Math.random()*160,
+        life:0.4+Math.random()*0.3,
+        t:0,
+        r:2+Math.random()*2
+      });
+    }
+  }
+
+  function spawnObstacle(){
+    var type = Math.random();
+    var h, w, y;
+    if(type < 0.55){ // ground cactus-like
+      h = H*(0.10+Math.random()*0.10);
+      w = h*(0.5+Math.random()*0.4);
+      y = groundY - h;
+    } else if(type < 0.85){ // wide low block
+      h = H*0.09;
+      w = H*(0.22+Math.random()*0.15);
+      y = groundY - h;
+    } else { // flying obstacle, forces low jump timing / duck via short jump
+      h = H*0.09;
+      w = H*0.14;
+      y = groundY - h - H*(0.22+Math.random()*0.10);
+    }
+    obstacles.push({x:W+10, y:y, w:w, h:h, passed:false});
+  }
+
+  function startGame(){
+    initGame();
+    state = 'playing';
+    startOverlay.classList.add('hidden');
+    overOverlay.classList.add('hidden');
+    lastT = performance.now();
+    requestAnimationFrame(loop);
+    initAudio();
+    startBgm();
+  }
+
+  function endGame(){
+    state = 'over';
+    shakeT = 0.25;
+    var isNew = score > best;
+    if(isNew){
+      best = score;
+      localStorage.setItem(STORAGE_KEY, String(best));
+    }
+    bestEl.textContent = 'BEST ' + best.toFixed(2);
+    finalScoreEl.textContent = score.toFixed(2);
+    newBestMsg.classList.toggle('hidden', !isNew);
+    overOverlay.classList.remove('hidden');
+    stopBgm();
+    playGameOverSfx();
+    saveHistoryEntry(score);
+    if(isNew && localStorage.getItem(NICK_KEY)) submitScore();
+  }
+
+  // ---------- Input ----------
+  function onPointerDown(e){
+    // ignore clicks on buttons (handled separately)
+    if(e.target && (e.target.id === 'startBtn' || e.target.id === 'retryBtn' || e.target.id === 'muteBtn')) return;
+    e.preventDefault();
+    jump();
+  }
+  container.addEventListener('pointerdown', onPointerDown, {passive:false});
+  window.addEventListener('keydown', function(e){
+    if(e.code === 'Space' || e.code === 'ArrowUp'){
+      e.preventDefault();
+      jump();
+    }
+  });
+  startBtn.addEventListener('click', startGame);
+  document.getElementById('muteBtn').addEventListener('click', function(e){
+    e.stopPropagation();
+    toggleMute();
+  });
+  retryBtn.addEventListener('click', startGame);
+
+  document.addEventListener('visibilitychange', function(){
+    if(document.hidden && state === 'playing'){
+      // pause by simply not scheduling; resume on focus via rAF restart
+      state = 'paused';
+      stopBgm();
+    } else if(!document.hidden && state === 'paused'){
+      state = 'playing';
+      lastT = performance.now();
+      requestAnimationFrame(loop);
+      startBgm();
+    }
+  });
+
+  // ---------- Update / Draw ----------
+  var lastT = 0;
+  function loop(now){
+    if(state !== 'playing'){ return; }
+    var dt = Math.min((now - lastT)/1000, 0.033);
+    lastT = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    elapsed += dt;
+    score += dt * 10 * (1 + speed/(W*0.42) - 1) ; // base scoring tied to speed factor
+    scoreEl.textContent = Math.floor(score);
+
+    // difficulty ramp
+    speed = Math.min(W*0.42 + elapsed*W*0.012, W*0.95);
+    spawnInterval = Math.max(0.75, 1.3 - elapsed*0.01);
+
+    // player physics
+    player.vy += gravity*dt;
+    player.y += player.vy*dt;
+    if(player.y > groundY){
+      player.y = groundY;
+      player.vy = 0;
+      player.onGround = true;
+      player.jumpsLeft = 2;
+    } else {
+      player.onGround = false;
+    }
+    player.rot = player.onGround ? 0 : Math.max(-0.5, Math.min(0.5, player.vy/(H*4)));
+
+    // spawn obstacles
+    spawnTimer += dt;
+    if(spawnTimer >= spawnInterval){
+      spawnTimer = 0;
+      spawnObstacle();
+    }
+
+    // move obstacles + collision
+    var px = player.x, py = player.y - player.h, pw = player.w, ph = player.h;
+    for(var i=obstacles.length-1;i>=0;i--){
+      var o = obstacles[i];
+      o.x -= speed*dt;
+      if(o.x + o.w < -20){ obstacles.splice(i,1); continue; }
+      // AABB collision with small margin for fairness
+      var margin = pw*0.18;
+      if(px+margin < o.x+o.w && px+pw-margin > o.x &&
+         py+margin < o.y+o.h && py+ph-margin > o.y){
+        endGame();
+        return;
+      }
+    }
+
+    // particles
+    for(var j=particles.length-1;j>=0;j--){
+      var p = particles[j];
+      p.t += dt;
+      if(p.t > p.life){ particles.splice(j,1); continue; }
+      p.x += p.vx*dt; p.y += p.vy*dt; p.vy += gravity*0.5*dt;
+    }
+
+    if(shakeT>0) shakeT -= dt;
+  }
+
+  function draw(){
+    ctx.save();
+    if(shakeT>0){
+      var s = shakeT*30;
+      ctx.translate((Math.random()-0.5)*s, (Math.random()-0.5)*s);
+    }
+
+    // sky
+    var grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#1b1c3a');
+    grad.addColorStop(0.6,'#12132a');
+    grad.addColorStop(1,'#2c2d55');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+    // stars (cheap parallax dots)
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    for(var s2=0; s2<18; s2++){
+      var sx = (s2*97 - (elapsed*20)%W + W*3) % W;
+      var sy = (s2*53) % (groundY*0.7);
+      ctx.fillRect(sx, sy, 2, 2);
+    }
+
+    // ground
+    ctx.fillStyle = '#2c2d55';
+    ctx.fillRect(0, groundY, W, H-groundY);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, groundY);
+    ctx.lineTo(W, groundY);
+    ctx.stroke();
+    // ground dashes moving
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 3;
+    var dashLen = 24, gap = 18, off = (elapsed*speed) % (dashLen+gap);
+    ctx.beginPath();
+    for(var dx = -off; dx < W; dx += dashLen+gap){
+      ctx.moveTo(dx, groundY + (H-groundY)*0.35);
+      ctx.lineTo(dx+dashLen, groundY + (H-groundY)*0.35);
+    }
+    ctx.stroke();
+
+    // obstacles
+    for(var i=0;i<obstacles.length;i++){
+      var o = obstacles[i];
+      var og = ctx.createLinearGradient(o.x,o.y,o.x,o.y+o.h);
+      og.addColorStop(0,'#ff6b81');
+      og.addColorStop(1,'#e84393');
+      ctx.fillStyle = og;
+      roundRect(ctx, o.x, o.y, o.w, o.h, Math.min(6,o.w*0.2,o.h*0.2));
+      ctx.fill();
+    }
+
+    // player
+    ctx.save();
+    var cx = player.x + player.w/2, cy = player.y - player.h/2;
+    ctx.translate(cx,cy);
+    ctx.rotate(player.rot);
+    var curSkin = skins[selectedSkin];
+    var pg = ctx.createLinearGradient(-player.w/2,-player.h/2,player.w/2,player.h/2);
+    pg.addColorStop(0,curSkin.c1);
+    pg.addColorStop(1,curSkin.c2);
+    ctx.fillStyle = pg;
+    roundRect(ctx, -player.w/2, -player.h/2, player.w, player.h, player.w*0.28);
+    ctx.fill();
+    // eye
+    ctx.fillStyle = '#0f1020';
+    ctx.beginPath();
+    ctx.arc(player.w*0.14, -player.h*0.12, Math.max(2,player.w*0.07), 0, Math.PI*2);
+    ctx.fill();
+    ctx.restore();
+
+    // particles
+    for(var j=0;j<particles.length;j++){
+      var p = particles[j];
+      var alpha = 1 - p.t/p.life;
+      ctx.fillStyle = 'rgba(255,255,255,'+alpha.toFixed(2)+')';
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // ---------- Skins ----------
+  var SKIN_KEY = 'jumpit_skin';
+  var skins = [
+    {c1:'#00d2ff', c2:'#6c5ce7'},
+    {c1:'#ff9f43', c2:'#ee5253'},
+    {c1:'#26de81', c2:'#0fb9b1'},
+    {c1:'#fd79a8', c2:'#a55eea'}
+  ];
+  var selectedSkin = parseInt(localStorage.getItem(SKIN_KEY) || '0', 10);
+  if(isNaN(selectedSkin) || selectedSkin < 0 || selectedSkin >= skins.length) selectedSkin = 0;
+
+  var skinButtons = document.querySelectorAll('.skin-swatch');
+  function renderSkinSelection(){
+    skinButtons.forEach(function(btn){
+      var idx = parseInt(btn.getAttribute('data-skin'), 10);
+      btn.classList.toggle('selected', idx === selectedSkin);
+    });
+  }
+  skinButtons.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      selectedSkin = parseInt(btn.getAttribute('data-skin'), 10);
+      localStorage.setItem(SKIN_KEY, String(selectedSkin));
+      renderSkinSelection();
+      if(state !== 'playing') draw();
+    });
+  });
+  renderSkinSelection();
+
+  // ---------- My records (local history) ----------
+  var HISTORY_KEY = 'jumpit_history';
+  var myBestEl = document.getElementById('myBestEl');
+  var historyListEl = document.getElementById('historyList');
+
+  function loadHistory(){
+    try{ return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+    catch(e){ return []; }
+  }
+
+  function saveHistoryEntry(s){
+    var hist = loadHistory();
+    hist.unshift({ score: s, ts: Date.now() });
+    hist = hist.slice(0, 20);
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(hist));
+    renderHistory();
+  }
+
+  function pad2(n){ return n < 10 ? '0'+n : ''+n; }
+
+  function renderHistory(){
+    myBestEl.innerHTML = '최고 <strong>' + best.toFixed(2) + '</strong>';
+    var hist = loadHistory();
+    historyListEl.innerHTML = '';
+    if(hist.length === 0){
+      historyListEl.innerHTML = '<li class="empty">아직 기록이 없어요</li>';
+      return;
+    }
+    hist.slice(0, 5).forEach(function(h){
+      var d = new Date(h.ts);
+      var dateStr = (d.getMonth()+1) + '/' + d.getDate() + ' ' + pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+      var li = document.createElement('li');
+      var scoreSpan = document.createElement('span');
+      scoreSpan.textContent = h.score.toFixed(2);
+      var dateSpan = document.createElement('span');
+      dateSpan.className = 'hist-date';
+      dateSpan.textContent = dateStr;
+      li.appendChild(scoreSpan);
+      li.appendChild(dateSpan);
+      historyListEl.appendChild(li);
+    });
+  }
+
+  // ---------- Real-time ranking (Supabase) ----------
+  // 설정 방법은 이 파일 하단 </body> 근처의 안내 주석을 참고하세요.
+  var SUPABASE_URL = "https://ivrgcohnltdgaufnyzdb.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml2cmdjb2hubHRkZ2F1Zm55emRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg4NzQyMTMsImV4cCI6MjEwNDQ1MDIxM30.8ntxD9FlOmqX50GihdFqK2mHhqzwP9YaFE5MXhJTWSs";
+  var supabaseReady = false;
+  var sb = null;
+  try{
+    if(window.supabase && SUPABASE_URL.indexOf('YOUR_') === -1){
+      sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      supabaseReady = true;
+    }
+  }catch(e){ supabaseReady = false; }
+
+  var DEVICE_KEY = 'jumpit_device_id';
+  var deviceId = localStorage.getItem(DEVICE_KEY);
+  if(!deviceId){
+    deviceId = 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    localStorage.setItem(DEVICE_KEY, deviceId);
+  }
+
+  var NICK_KEY = 'jumpit_nickname';
+  var nicknameInput = document.getElementById('nicknameInput');
+  nicknameInput.value = localStorage.getItem(NICK_KEY) || '';
+
+  var rankMsg = document.getElementById('rankMsg');
+  var rankListEl = document.getElementById('rankList');
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function renderRankFallback(){
+    rankMsg.textContent = '실시간 랭킹은 Supabase 연동 후 모두에게 공개돼요. 지금은 이 기기의 내 최고 기록만 보여요.';
+    rankListEl.innerHTML = '';
+    var li = document.createElement('li');
+    li.innerHTML = '<span class="rank-no">1</span><span class="rank-name">' +
+      escapeHtml(nicknameInput.value || '나') + '</span><span class="rank-score">' + best.toFixed(2) + '</span>';
+    rankListEl.appendChild(li);
+  }
+
+  function renderRankRows(rows){
+    rankListEl.innerHTML = '';
+    if(!rows || rows.length === 0){
+      rankListEl.innerHTML = '<li class="empty">아직 등록된 기록이 없어요</li>';
+      return;
+    }
+    rows.forEach(function(r, i){
+      var li = document.createElement('li');
+      if(r.id === deviceId) li.classList.add('me');
+      li.innerHTML = '<span class="rank-no">' + (i+1) + '</span><span class="rank-name">' +
+        escapeHtml(r.name) + '</span><span class="rank-score">' + Number(r.score).toFixed(2) + '</span>';
+      rankListEl.appendChild(li);
+    });
+  }
+
+  function fetchRanking(){
+    if(!supabaseReady) return;
+    sb.from('leaderboard').select('id,name,score').order('score', { ascending:false }).limit(10)
+      .then(function(res){
+        if(res.error){ rankMsg.textContent = '랭킹을 불러오지 못했어요.'; return; }
+        renderRankRows(res.data);
+      });
+  }
+
+  function submitScore(){
+    var name = (nicknameInput.value || '익명').trim().slice(0, 8) || '익명';
+    nicknameInput.value = name;
+    localStorage.setItem(NICK_KEY, name);
+    if(!supabaseReady){
+      renderRankFallback();
+      return;
+    }
+    rankMsg.textContent = '등록 중...';
+    sb.from('leaderboard').upsert({ id: deviceId, name: name, score: best }, { onConflict: 'id' })
+      .then(function(res){
+        if(res.error){ rankMsg.textContent = '등록에 실패했어요. 잠시 후 다시 시도해주세요.'; }
+        else{ rankMsg.textContent = '랭킹에 등록되었어요!'; }
+      });
+  }
+  document.getElementById('registerBtn').addEventListener('click', submitScore);
+
+  function listenRanking(){
+    if(!supabaseReady){
+      renderRankFallback();
+      return;
+    }
+    fetchRanking();
+    sb.channel('leaderboard-changes')
+      .on('postgres_changes', { event:'*', schema:'public', table:'leaderboard' }, fetchRanking)
+      .subscribe();
+  }
+
+  renderHistory();
+  listenRanking();
+
+  // initial static frame before start
+  initGame();
+  draw();
+})();
+</script>
+</body>
+</html>
