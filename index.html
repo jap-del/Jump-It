@@ -18,8 +18,18 @@
 <!-- Favicon (inline SVG, no extra request) -->
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%236c5ce7'/%3E%3Crect x='30' y='30' width='40' height='40' rx='8' fill='white'/%3E%3C/svg%3E">
 
-
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+<!--
+  ============================================================
+  Google AdSense 연동 방법
+  1) 게시자 ID(ca-pub-6914149942050509)와 광고 단위 슬롯 ID
+     (jumpit-top: 3108753297, jumpit-bottom: 6269113577)가 모두 반영되어 있습니다.
+  2) ads.txt는 jap-del.github.io 루트 저장소에 이미 있으므로(pub-6914149942050509)
+     Jump-It 쪽에는 별도로 추가하지 않아도 됩니다.
+  3) 승인 전에는 광고 영역이 빈 채로 남을 수 있습니다. 도메인(jap-del.github.io)
+     심사가 승인되면 이 페이지에도 자동으로 광고가 게재됩니다.
+  ============================================================
+-->
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6914149942050509" crossorigin="anonymous"></script>
 
 <style>
   :root{
@@ -212,13 +222,13 @@
     <p class="tagline">스페이스바 또는 화면 탭으로 점프! 장애물을 피해보세요</p>
   </header>
 
-  <!-- 상단 광고 슬롯 (본인 애드센스 값으로 교체) -->
+  <!-- 상단 광고 슬롯 (jumpit-top) -->
   <div class="ad-slot top">
     <ins class="adsbygoogle"
-         style="display:block;width:100%;height:100%"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-         data-ad-slot="0000000000"
-         data-ad-format="horizontal"
+         style="display:block;width:100%"
+         data-ad-client="ca-pub-6914149942050509"
+         data-ad-slot="3108753297"
+         data-ad-format="auto"
          data-full-width-responsive="true"></ins>
   </div>
 
@@ -250,13 +260,13 @@
     PC: <kbd>Space</kbd> 또는 <kbd>↑</kbd> 로 점프 &nbsp;|&nbsp; 모바일: 화면 탭
   </p>
 
-  <!-- 하단 광고 슬롯 -->
+  <!-- 하단 광고 슬롯 (jumpit-bottom) -->
   <div class="ad-slot bottom">
     <ins class="adsbygoogle"
-         style="display:block;width:100%;height:100%"
-         data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
-         data-ad-slot="0000000001"
-         data-ad-format="horizontal"
+         style="display:block;width:100%"
+         data-ad-client="ca-pub-6914149942050509"
+         data-ad-slot="6269113577"
+         data-ad-format="auto"
          data-full-width-responsive="true"></ins>
   </div>
 
@@ -285,7 +295,30 @@
 
 </div>
 
-
+<!--
+  ============================================================
+  실시간 랭킹(Supabase) 연동 방법 — 무료
+  1) https://supabase.com 에서 새 프로젝트 생성
+  2) 왼쪽 메뉴 SQL Editor에서 아래 쿼리 실행 (테이블 생성 + 공개 접근 규칙):
+     create table leaderboard (
+       id text primary key,
+       name text not null,
+       score numeric not null,
+       updated_at timestamptz default now()
+     );
+     alter table leaderboard enable row level security;
+     create policy "public read" on leaderboard for select using (true);
+     create policy "public insert" on leaderboard for insert with check (true);
+     create policy "public update" on leaderboard for update using (true);
+  3) 왼쪽 메뉴 Database > Replication 에서 leaderboard 테이블의 Realtime을 켜세요
+     (이걸 켜야 다른 사람이 등록한 기록이 새로고침 없이 실시간으로 반영됩니다)
+  4) 왼쪽 메뉴 Project Settings > API 에서 "Project URL"과 "anon public" 키를 복사해
+     아래 스크립트의 SUPABASE_URL, SUPABASE_ANON_KEY 값에 그대로 붙여넣으세요.
+  5) 설정 전에는 랭킹판이 "로컬 전용" 안내와 함께 내 최고 기록만 보여줍니다.
+  * 참고: anon key로 누구나 점수를 쓸 수 있는 구조라 캐주얼 게임 랭킹판 용도에는
+    충분하지만, 악의적으로 값을 조작해 등록하는 것까지 막지는 못합니다.
+  ============================================================
+-->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
